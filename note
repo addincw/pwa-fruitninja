@@ -1,0 +1,78 @@
+- manifest.json: json file untuk mendeskripsikan tampilan dari aplikasi
+    (nama aplikasi, theme, icon)
+
+    pada ios, ada beberapa attribut di manifest.json (icon, theme) yang bekerja, sehingga harus di setting
+    melalui meta tag / link
+    <!-- ios support -->
+    <link rel="apple-touch-icon" href="/img/icons/icon-96x96.png">
+    <meta name="apple-mobile-web-app-status-bar" content="#FFE1C4">
+
+- testing & debuggin: bisa melalui 2 cara, langsung dari browser (inspect > application)
+    atau melalui android emulator dari android studio.
+
+    jika melalui android studio, harus di pastikan url yang diakses adalah alamat dari 
+    localhost (10.0.2.2:5500 belum dianggap https). karena pwa berjalan di https. untuk membuat
+    environment pada emulator menjadi https harus di melalui port forwarding dari browser.
+        1. inspect element -> more tools -> remote devices
+        2. pilih devices yang aktive
+        3. setting
+        4. check port forwarding set (ex: 5500: localhost:5500)
+        5. access lewat localhost:5500
+
+- service worker (sw): kemampuan broser untuk berjalan saat offline, berjalan pada background
+    serta push notification
+
+    service worker bekerja di thread yang berbeda sehingga service worker tidak memiliki kemampuan
+    untuk memanipulasi document. tetapi memilki kemampuan untuk listen for fetch request
+
+    peletakan sw berpengaruh terhadap scoope yang akan di tangani. cth: jika diletakkan pada subfolder
+    maka scoope yang di tangani hanya sebatas subfolder tsb.
+
+    service worker lifecycle:
+        1.  app.js registerig sw.js (trigger install event)
+            install event terjadi 1x saat sw registered.
+            digunakan untuk cache static asset (asset yang selalu sama di setiap page)
+        2.  setelah terinstall, sw menjadi active (trigger active event)
+            pada saat sw active, sw baru memiliki kemampuan untuk mengakses file yang ada pada scoopenya 
+        3.  pada saat active sw memiliki kemampuan untuk berperan sebagai proxy terhadap request yang di lakukan (trigger fetch event)
+            fetch event selalu di panggil setiap aplikasi request ke server
+
+            jika system telah menerapkan response with cache saat event fetch, system akan selalu mengambil dari cache terlebih dahulu meskipun
+            network dalam keadaan online. Sehingga jika ada perubahan pada file yang telah di cache tidak akan tampil sesuai dengan perubahan terbarunya.
+            solusinya:
+                1. setiap kali ada perubahan pada list asset yang telah di cache, 
+                    file sw harus di update juga (ganti nama versinya)
+                2. hapus cache versi lamanya (dilakukan saat active event)
+
+        on page reload, system akan check apakah ada perubahan terhadap file sw, jika ada:
+        1. system akan mentrigger event install kembali.tetapi tidak langsung lanjut ke event active
+        2. untuk active dengan perubahan yang terbaru, instance dari aplikasi yang sedang active harus di terminate terlebih dahulu
+           (close tab / close browser)
+
+- install banner: install banner adalah action untuk user menyimpan aplikasi pada home screen. install banner akan muncul
+    jika kriteria dari install banner terpenuhi. yaitu: 
+    1. manifest.json memiliki attribut
+        short_name / name, icons (192 and 512), start_url, display
+    2. https server
+    3. registering sw with fetch event
+
+- firestore
+    1. console.firebase.google.com
+    2. create project
+    3. copy snippet code
+    4. paste in index.html
+    5. add <script src... firebase-firestore.js .../>
+    6. init db connection const db = firebase.firestore()
+
+- firebase hosting
+    1. create hosting
+    2. npm install firebase-tools
+    3. firebase login / firebase login --no-localhost
+    4. firebase init (root directory)
+        pilih hosting
+        pilih aplikasi
+        set default to public directory
+        move all created project to public directory
+    5. firebase deploy
+
+source: the net ninja playlist pwa tutorial for beginners
